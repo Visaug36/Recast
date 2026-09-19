@@ -1,0 +1,65 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`a caveat is a promise > says how much of the promise surface it actually reaches > not exercised 1`] = `
+[
+  "docx → rtf — images dropped — the .docx fixture has no images",
+  "epub → md — styling dropped — the .epub fixture has no styling",
+  "md → epub — styling dropped — the .md fixture has no styling",
+  "md → epub — images dropped — the .md fixture has no images",
+  "rtf → md — tables dropped — the .rtf fixture has no tables",
+  "rtf → md — images dropped — the .rtf fixture has no images",
+  "pdf → md — images dropped — the .pdf fixture has no images",
+  "pdf → md — tables dropped — the .pdf fixture has no tables",
+  "xlsx → ods — charts dropped — the .xlsx fixture has no charts",
+  "xlsx → ods — images dropped — the .xlsx fixture has no images",
+  "xlsx → ods — styling dropped — the .xlsx fixture has no styling",
+  "xlsx → md — merged cells dropped — the .xlsx fixture has no merged cells",
+  "xlsx → docx — charts dropped — the .xlsx fixture has no charts",
+  "xlsx → docx — images dropped — the .xlsx fixture has no images",
+  "xlsx → docx — styling dropped — the .xlsx fixture has no styling",
+  "ods → xlsx — formulas dropped — the .ods fixture has no formulas",
+  "ods → xlsx — charts dropped — the .ods fixture has no charts",
+  "ods → xlsx — images dropped — the .ods fixture has no images",
+  "ods → xlsx — styling dropped — the .ods fixture has no styling",
+  "ods → md — formulas dropped — the .ods fixture has no formulas",
+  "ods → md — merged cells dropped — the .ods fixture has no merged cells",
+  "ods → docx — formulas dropped — the .ods fixture has no formulas",
+  "ods → docx — charts dropped — the .ods fixture has no charts",
+  "ods → docx — images dropped — the .ods fixture has no images",
+  "ods → docx — styling dropped — the .ods fixture has no styling",
+  "odp → txt — images dropped — the .odp fixture has no images",
+  "odp → txt — charts dropped — the .odp fixture has no charts",
+  "md → pptx — images dropped — the .md fixture has no images",
+  "md → odp — images dropped — the .md fixture has no images",
+]
+`;
+
+exports[`a caveat is a promise > says how much of the promise surface it actually reaches > true by construction 1`] = `
+[
+  "html → md — styling dropped — .md cannot express it",
+  "html → md — scripts dropped — .md cannot express it",
+  "xlsx → md — formulas dropped — .md cannot express it",
+  "xlsx → docx — formulas dropped — .docx cannot express it",
+  "pptx → txt — images dropped — .txt cannot express it",
+  "pptx → txt — charts dropped — .txt cannot express it",
+]
+`;
+
+exports[`a caveat is a promise > says how much of the promise surface it actually reaches > unverifiable 1`] = `
+[
+  "docx → md — Markdown has no syntax for a font, a colour or a page, so nothing in the output could carry them. True by the shape of the target rather than by anything the engine does.",
+  "docx → pdf — A claim that the output does not match what Word would have produced. Checking it needs Word.",
+  "odt → md — Markdown has no syntax for a font, a colour or a page, so nothing in the output could carry them. True by the shape of the target rather than by anything the engine does.",
+  "md → docx — The Markdown fixture contains no raw HTML block, so the second half of this sentence has nothing to act on. Adding one would make it checkable.",
+  "md → pdf — A claim about which typography was used, against an unnamed other renderer. There is nothing to compare the output to.",
+  "md → pdf — emphasis dropped — nothing in a .pdf records it",
+  "md → rtf — RTF marks a quotation with an indent, which is indistinguishable from any other indented paragraph, so "quotes survived" cannot be read back out of the file.",
+  "txt → pdf — Where a line broke is a fact about the drawn page. A PDF records the positions of text runs, not that one of them is a continuation of another, so this cannot be read back.",
+  "pdf → txt — Both halves need a fixture Recast does not have: a multi-column PDF, and a scanned one. The scanned case is covered by a refusal in _pdfread.ts rather than by this pair.",
+  "pdf → md — A statement of where the inference fails, not a promise about the output. There is nothing here to hold Recast to.",
+  "xlsx → pdf — The fixture workbook is three columns wide, so nothing is clipped and this claim is never put to the test. A wide fixture would make the first half checkable.",
+  "ods → pdf — The fixture workbook is three columns wide, so nothing is clipped and this claim is never put to the test. A wide fixture would make the first half checkable.",
+  "pptx → md — "Everything visual" names no feature, so there is nothing specific to look for. The checkable half of it is the sentence above, which is already checked.",
+  "odp → md — "Everything visual" names no feature, so there is nothing specific to look for. The checkable half of it is the sentence above, which is already checked.",
+]
+`;

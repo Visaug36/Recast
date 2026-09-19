@@ -248,24 +248,6 @@ export default function Home() {
           </ul>
         </section>
 
-        <section className="mx-auto max-w-6xl px-4 pt-9 sm:px-10">
-          <ul className="flex flex-col gap-5 rounded-control border border-separator bg-surface px-5 py-5 sm:flex-row sm:gap-10">
-            <Claim icon={<DropArrow small />} title="The converter comes to you.">
-              The engine downloads once and runs on your machine. Open the network tab and
-              drop a file — nothing leaves.
-            </Claim>
-            <Claim icon={<LostMark />} title="It tells you what it broke.">
-              Formats disagree, so something always gives. Recast separates what was lost
-              from what merely changed.
-            </Claim>
-            <Claim icon={<CheckMark plum />} title="It keeps working offline.">
-              Once this page has loaded, conversions run with the network unplugged. The
-              one exception is a Chinese or Japanese font, fetched from this site the
-              first time a document needs one.
-            </Claim>
-          </ul>
-        </section>
-
         <section id="about" className="mx-auto max-w-6xl px-4 py-10 sm:px-10">
           <div className="flex max-w-[760px] gap-4">
             <span className="mt-0.5 shrink-0">
@@ -290,6 +272,13 @@ export default function Home() {
                 </Link>{' '}
                 says which pairs those are and why.
               </p>
+              <p className="mt-2.5 text-prose text-ink">
+                Two things are still fetched while you work, both from this site: the
+                engine for a pair the first time you convert with it, and a Chinese or
+                Japanese font the first time a document needs one. Everything else is
+                already in the page, which is why the request count at the top of this
+                page stays at zero.
+              </p>
               <a
                 href={REPO_URL}
                 className="recast-motion mt-3 inline-block border-b border-plum-edge pb-1 font-mono text-[15px]/[1] font-medium text-plum-text"
@@ -306,35 +295,16 @@ export default function Home() {
   );
 }
 
-function Claim({
-  icon,
-  title,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <li className="flex flex-1 gap-3">
-      <span className="mt-0.5 shrink-0 text-plum">{icon}</span>
-      <p className="text-small text-ink">
-        <b className="font-semibold text-label">{title}</b> {children}
-      </p>
-    </li>
-  );
-}
-
 /* ---------------------------------------------------------------------------
    The interface's own marks, inline for the same reason the format tiles are:
    a page that makes no requests should not make one for a chevron.
    --------------------------------------------------------------------------- */
 
-function CheckMark({ plum = false }: { plum?: boolean }) {
+function CheckMark() {
   return (
     <svg
-      width={plum ? 18 : 15}
-      height={plum ? 18 : 15}
+      width="15"
+      height="15"
       viewBox="0 0 24 24"
       aria-hidden="true"
       className="shrink-0"
@@ -351,15 +321,14 @@ function CheckMark({ plum = false }: { plum?: boolean }) {
   );
 }
 
-function DropArrow({ small = false }: { small?: boolean }) {
-  const size = small ? 18 : 34;
+function DropArrow() {
   return (
     <svg
-      width={size}
-      height={size}
+      width="34"
+      height="34"
       viewBox="0 0 24 24"
       aria-hidden="true"
-      className={small ? 'shrink-0' : 'mx-auto block text-plum'}
+      className="mx-auto block text-plum"
     >
       <g fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
         <path d="M12 2.5v11" />
@@ -381,20 +350,6 @@ function RightArrow() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-    </svg>
-  );
-}
-
-function LostMark() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="shrink-0"
-    >
-      <path d="M3.5 3.5h17v10h-7v7h-10z" fill="currentColor" />
     </svg>
   );
 }
