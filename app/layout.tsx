@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Schibsted_Grotesk, Spline_Sans_Mono } from 'next/font/google';
 import { THEME_COLOR } from '@/lib/theme';
+import { totals } from '@/lib/registry/matrix';
 import './globals.css';
 
 /* next/font downloads these at build time and serves them from Recast's own
@@ -31,10 +32,48 @@ const splineMono = Spline_Sans_Mono({
  */
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
+/**
+ * Where the site is served from, for absolute metadata URLs.
+ *
+ * The workflow derives it from GITHUB_REPOSITORY, the same value the basePath
+ * comes from, so a rename carries it. Unset in dev and in tests, where the
+ * relative tags are correct and an absolute one would be a guess.
+ */
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+const counts = totals();
+
+/**
+ * What a tab says.
+ *
+ * Checked as a tab rather than as a string. Chrome gives a tab roughly 240px
+ * with a handful open and 120px on a bad day, which is about 26 and 9
+ * characters of title. The old one was 42 — it truncated at every width, so
+ * "…in your browser" was never once read by anybody.
+ *
+ * 26 fits whole at 240 and degrades to "Recast — convert…", which is the two
+ * words worth having. `template` puts a sub-page's own name first for the same
+ * reason: at 120px "The full…" is a different tab and "Recast…" is not.
+ */
 export const metadata: Metadata = {
-  title: 'Recast — convert documents in your browser',
-  description:
-    'Convert between PDF, Word, OpenDocument, RTF, HTML, EPUB, Markdown, plain text, PowerPoint, Excel, CSV and JSON. Every conversion runs in your browser; files never leave your machine.',
+  title: {
+    default: 'Recast — convert documents',
+    template: '%s — Recast',
+  },
+  description: `Convert between ${counts.formats} document formats — ${counts.pairs} pairs — without uploading anything. Every conversion runs in your browser; there is no server to send a file to.`,
+  applicationName: 'Recast',
+  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
+  openGraph: {
+    type: 'website',
+    siteName: 'Recast',
+    locale: 'en',
+    title: 'Recast — convert documents',
+    description: `Convert between ${counts.formats} document formats — ${counts.pairs} pairs — without uploading anything. Every conversion runs in your browser; there is no server to send a file to.`,
+    ...(siteUrl
+      ? { url: siteUrl, images: [{ url: '/icon-512.png', width: 512, height: 512 }] }
+      : {}),
+  },
+  twitter: { card: 'summary' },
   icons: {
     icon: [
       { url: `${basePath}/icon.svg`, type: 'image/svg+xml' },

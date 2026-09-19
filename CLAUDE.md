@@ -123,7 +123,7 @@ subagent was doing exactly what it should; the staging was the mistake.
 
 14 formats, **114 pairs from 44 declared edges** — 44 direct and 70 routed
 through a hub, all of them listed at `/matrix` and counted from the registry
-rather than written down. 408 tests, entry chunk ~183 KB gzipped against a
+rather than written down. 439 tests, entry chunk ~187 KB gzipped against a
 200 KB budget. Static export, deployed to GitHub Pages. 64 pairs are deliberately
 refused and written as rules in `lib/registry/unsupported.ts`: either the value
 of the output is its visual layout, and rebuilding that means a rendering engine

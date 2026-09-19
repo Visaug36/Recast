@@ -8,10 +8,20 @@ import { matrix, totals } from '@/lib/registry/matrix';
 import { unsupported } from '@/lib/registry/unsupported';
 import type { Cell } from '@/lib/registry/matrix';
 
+const counts = totals();
+
+/**
+ * `title` is the page's own name only; the layout's template appends
+ * "— Recast". Leading with the page is what makes this tab tell itself apart
+ * from the home one when Chrome has squeezed both to nine characters.
+ */
 export const metadata: Metadata = {
-  title: 'The full matrix — Recast',
-  description:
-    'Every pair Recast converts, every pair it refuses, and the reason for each refusal.',
+  title: 'The full matrix',
+  description: `Every one of Recast's ${counts.pairs} conversion pairs, the ${counts.refused} it refuses, and the reason for each refusal.`,
+  openGraph: {
+    title: 'The full matrix — Recast',
+    description: `Every one of Recast's ${counts.pairs} conversion pairs, the ${counts.refused} it refuses, and the reason for each refusal.`,
+  },
 };
 
 /**
@@ -27,7 +37,6 @@ export const metadata: Metadata = {
  */
 export default function MatrixPage() {
   const rows = matrix();
-  const counts = totals();
 
   // One reason covers many pairs, so the refusals are grouped by the sentence
   // rather than listed 64 times.

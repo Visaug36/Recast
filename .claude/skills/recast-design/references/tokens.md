@@ -33,10 +33,16 @@ format tiles, which are each format's own and live in `components/FormatIcon.tsx
 | `format-md`     | (SVG `fill`)        | `#1f1d26` | `#f3f1f7` | The Markdown tile's field             |
 | `format-md-ink` | (SVG `fill`)        | `#ffffff` | `#1f1d26` | The Markdown tile's letterform        |
 
-`format-md` is the only format tile with a theme. The other thirteen keep one
-colour in both, and all fourteen live in `components/FormatIcon.tsx`; Markdown's
-field is near-black, which is the format's identity and is invisible against a
-dark card, so it inverts rather than greying into the neighbouring `txt` tile.
+`format-md` is the only format tile with a theme, and deliberately so. The other
+thirteen keep one colour in both, and all fourteen live in
+`components/FormatIcon.tsx`; Markdown's field is near-black, which is the
+format's identity and is invisible against a dark card, so it inverts rather
+than greying into the neighbouring `txt` tile.
+
+This is a rule with a test behind it: `components/FormatIcon.test.tsx` fails if
+a second tile becomes themed, if Markdown greys instead of inverting, or if
+either of its values lands on another format's colour. Adding a themed tile
+means changing that test on purpose. The reasoning is in `docs/DECISIONS.md`.
 
 `on-plum` and `on-plum-soft` are the same in both themes on purpose: they sit on
 plum, which is itself a token, so they follow it rather than the page.

@@ -56,6 +56,16 @@ must not, and `pnpm verify:browser` fails on any off-origin request.
   in `components/FormatIcon.tsx` are each format's own recognisable colour, so a
   row is identifiable before its label is read. Markdown is the one with a
   theme; the reason is in `references/tokens.md`.
+- **The app mark is tilted 12°, and 12 is the ceiling.** The design draws the
+  staff upright; the tilt is Recast's, because a vertical staff reads as a
+  diagram of a staff. It is not the middle of the 12–15° range it was asked for
+  — past 12 the stone's lower facet swings clear of the shaft, opens a notch,
+  and the silhouette becomes an axe. Holding a steeper angle would mean
+  redrawing the head, and the head is the design's. Do not raise it; the full
+  reasoning is in `docs/DECISIONS.md` and `scripts/make-icons.mjs`, and
+  `components/FormatIcon.test.tsx` fails above 12. The mark's two hex values are
+  the one place a literal is allowed in a component, because
+  `components/StaffMark.tsx` and `public/icon.svg` must be the same drawing.
 - **Dark mode follows `prefers-color-scheme`**, and can be forced with `.dark` or
   `.light` on `<html>`. Tokens go through `@theme inline`, which keeps the
   `var()` reference intact so utilities follow the live theme instead of baking

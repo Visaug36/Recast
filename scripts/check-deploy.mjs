@@ -135,6 +135,19 @@ export async function checkDeploy({
     notes.push(`assets reference ${basePath.replace(/\/$/, '')}/_next/`);
   }
 
+  // The Open Graph URL is baked in at build time from the repository name, the
+  // same way basePath is, so it can go stale the same way — and nothing about
+  // a wrong one is visible on the site itself. It is only ever read by somebody
+  // else's link preview, which is exactly the kind of thing nobody checks.
+  if (page.ok) {
+    const declared = /<meta property="og:url" content="([^"]+)"/.exec(page.body)?.[1];
+    if (declared && declared.replace(/\/$/, '') !== base.replace(/\/$/, '')) {
+      problems.push(`the page says og:url is ${declared}, but it is served from ${base}`);
+    } else if (declared) {
+      notes.push('og:url matches where it is served');
+    }
+  }
+
   return { ok: problems.length === 0, problems, notes };
 }
 

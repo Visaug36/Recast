@@ -71,6 +71,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
+      # The same path, committed. Local checks read `homepage` from
+      # package.json rather than the git remote, because a remote is
+      # per-checkout state that a rename does not update — this container reset
+      # it to the pre-rename URL three sessions running, and GitHub's redirect
+      # kept it working, so a local build and a local check agreed with each
+      # other at the wrong prefix. Committing the value fixes that only if the
+      # committed value cannot itself go stale, which is what this asserts.
+      - name: Assert the committed site path matches this repository
+        run: |
+          committed=$(node scripts/site-path.mjs)
+          expected="/${GITHUB_REPOSITORY#*/}"
+          if [ "$committed" != "$expected" ]; then
+            echo "::error::package.json homepage says $committed, but this repository publishes at $expected. Update homepage."
+            exit 1
+          fi
+          echo "homepage path: $committed"
+
       # Reads the pnpm version from packageManager in package.json.
       - uses: pnpm/action-setup@v6
 
@@ -100,7 +117,16 @@ jobs:
       - name: Build static export
         run: |
           export NEXT_PUBLIC_BASE_PATH="/${GITHUB_REPOSITORY#*/}"
+
+          # Absolute URLs for the Open Graph tags. github.io lowercases the
+          # owner; the repository keeps its case. Derived from the same value
+          # as basePath, so a rename carries both, and `published` below reads
+          # og:url back off the live page to prove it did.
+          owner="${GITHUB_REPOSITORY%%/*}"
+          export NEXT_PUBLIC_SITE_URL="https://${owner,,}.github.io${NEXT_PUBLIC_BASE_PATH}/"
+
           echo "basePath: $NEXT_PUBLIC_BASE_PATH"
+          echo "siteUrl:  $NEXT_PUBLIC_SITE_URL"
           pnpm build
 
       # The rename trap, asserted rather than assumed. Renaming the repository

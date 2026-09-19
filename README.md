@@ -84,18 +84,20 @@ build time, so the published site is reproduced by giving both commands the same
 prefix:
 
 ```bash
-# The prefix is the repository name, the same value CI derives from
-# GITHUB_REPOSITORY. Locally it has to come from the git remote — and a rename
-# does not update that on its own. GitHub redirects the old URL, so a stale
-# remote keeps working and quietly hands over the previous name, which is how
-# a check at the wrong prefix passes while telling you nothing.
+# The prefix is the repository name. It comes from "homepage" in package.json,
+# which is committed, rather than from the git remote — a remote is per-checkout
+# state, and a rename does not update it. GitHub redirects the old URL, so a
+# stale remote keeps working and quietly hands over the previous name; the build
+# and the check then agree with each other at the wrong prefix and pass.
 #
-# So it is echoed. Read the line against the repository's current name, and
-# run `git remote set-url origin <new url>` if they disagree.
-BASE="/$(basename -s .git "$(git remote get-url origin)")"
+# CI derives the same value from GITHUB_REPOSITORY and fails if the two
+# disagree, so the committed value cannot go stale either.
+BASE="$(pnpm -s site:path)"
+SITE="$(pnpm -s site:path --url)"
 echo "basePath: $BASE"
+echo "siteUrl:  $SITE"
 
-NEXT_PUBLIC_BASE_PATH="$BASE" pnpm build
+NEXT_PUBLIC_BASE_PATH="$BASE" NEXT_PUBLIC_SITE_URL="$SITE" pnpm build
 NEXT_PUBLIC_BASE_PATH="$BASE" pnpm verify:browser
 ```
 

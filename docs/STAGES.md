@@ -11,6 +11,56 @@ would be two places to keep true, and the numbers below are the link.
 
 ---
 
+## Stage 9 — The approved design · 19 Sep
+
+**Shipped.** `design/Recast.dc.html`, committed first and then implemented.
+The ink-plum palette in both themes, Schibsted Grotesk and Spline Sans Mono
+self-hosted through `next/font`, ten type tokens, two radii and one curve —
+with `test/tokens.test.ts` comparing the written reference against the
+stylesheet so the reference cannot drift. The staff mark, drawn once and shared
+by the favicon and the header. Fourteen format tiles from a `Record<Format, …>`
+table. The home page and `/matrix` rebuilt. Tab titles chosen by rendering tab
+chrome at three widths rather than by counting characters.
+
+**Broke.** `FORMAT_SENTENCE` named eight of fourteen formats, and so did the
+file picker's `accept` — six formats could not be selected at all, on a page
+whose whole architecture is that no component names a format. The registry rule
+was written down and the two places breaking it were the two nobody had looked
+at since there were eight.
+
+And three claims in the design file were untrue for this product: a Google
+Fonts stylesheet link, "network requests: 0", and a version string. Each was
+cut or changed rather than copied.
+
+**Then, four times running:** this container started with `git remote` reset to
+the pre-rename URL. GitHub redirects it, so nothing failed — a full build went
+out at `/Kiln`, `og:url` and all, and the local check that exists to catch a
+wrong prefix derived the same wrong prefix from the same wrong source and
+passed. The published path now lives in `package.json` and CI fails the build if
+the committed value and `GITHUB_REPOSITORY` disagree.
+
+**Taught.** Three things.
+
+A design file is a claim, not a specification. Three of its statements were
+about a product that fetches fonts from a CDN and reports zero network
+requests; copying them would have made the front page lie. Check a claim before
+implementing it, the same way a caveat gets round-tripped before it is written
+down.
+
+Two things agreeing is not two things checking each other. The build and the
+verifier both read the repository name from the git remote, so a stale remote
+made them agree at the wrong answer — which is indistinguishable from passing.
+A check is only a check if its input comes from somewhere the thing being
+checked did not.
+
+A judgement call needs its ceiling written down, not just its value. The staff
+tilt is 12° at the top of the 12–15° range it was asked for, because past 12 the
+silhouette becomes an axe. "12" alone reads as a default somebody will helpfully
+raise; "12 is the ceiling, and here is what 13 costs" does not — so it is in the
+component, the generator, the decision log, the design skill and a failing test.
+
+---
+
 ## Stage 8 — Recast, warnings with a severity, and no dead controls · 19 Sep
 
 **Shipped.** Three commits. The rename, on its own, with the published site

@@ -143,6 +143,33 @@ describe('a deploy that reported success and served the wrong thing', () => {
     expect(result.problems.join(' ')).toMatch(new RegExp(`could not read ${STAMP}`));
   });
 
+  it('fails when og:url names somewhere the page is not', async () => {
+    // Only ever read by somebody else's link preview, so a wrong one is
+    // invisible on the site itself — exactly the kind of staleness that
+    // survives for months.
+    served = {
+      stamp: SHA,
+      page: `<meta property="og:url" content="https://example.github.io/Kiln/"><script src="${BASE_PATH}/_next/app.js"></script>`,
+    };
+
+    const result = await checkDeploy(goodRun());
+    expect(result.ok).toBe(false);
+    expect(result.problems.join(' ')).toMatch(
+      /og:url is https:\/\/example\.github\.io\/Kiln\//,
+    );
+  });
+
+  it('accepts an og:url that matches, and says nothing when there is none', async () => {
+    served = {
+      stamp: SHA,
+      page: `<meta property="og:url" content="${origin}${BASE_PATH}/"><script src="${BASE_PATH}/_next/app.js"></script>`,
+    };
+    expect((await checkDeploy(goodRun())).ok).toBe(true);
+
+    served = { stamp: SHA, page: `<script src="${BASE_PATH}/_next/app.js"></script>` };
+    expect((await checkDeploy(goodRun())).ok).toBe(true);
+  });
+
   it('fails when the page was built for a different basePath', async () => {
     // The rename trap, seen from the far end: the right commit is live and
     // every asset on it points at the old repository name.

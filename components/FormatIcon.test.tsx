@@ -6,6 +6,8 @@ import { FORMATS } from '@/lib/registry';
 import FormatIcon from './FormatIcon';
 import StaffMark from './StaffMark';
 
+const globals = readFileSync(join(process.cwd(), 'app', 'globals.css'), 'utf8');
+
 describe('the format tiles', () => {
   it('draws one for every format the registry declares', () => {
     // `Record<Format, Tile>` makes this a compile error rather than a runtime
@@ -72,6 +74,75 @@ describe('the format tiles', () => {
   it('says nothing to a screen reader, because the filename already did', () => {
     const { container } = render(<FormatIcon format="docx" />);
     expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+  });
+});
+
+/**
+ * Markdown's tile is the one format colour with a theme, and that is a rule
+ * rather than something that happened to one tile.
+ *
+ * Its field is near-black, which is the format's identity — and invisible on a
+ * dark card. Greying it down is the obvious repair and the wrong one: it lands
+ * on `txt`, and the tiles exist so a row is identifiable before its label is
+ * read. So it inverts, and these are the terms of the exception.
+ */
+describe('the one tile with a theme', () => {
+  /** `--format-md: #1f1d26;` from one block of globals.css. */
+  function variable(selector: string, name: string): string {
+    const open = globals.indexOf('{', globals.indexOf(selector));
+    const body = globals.slice(open, globals.indexOf('\n}', open));
+    const found = new RegExp(`--${name}:\\s*(#[0-9a-f]{6});`).exec(body);
+    if (!found) throw new Error(`no --${name} in ${selector}`);
+    return found[1]!;
+  }
+
+  /** Rough perceived lightness, 0–1. Enough to tell inverted from greyed. */
+  function lightness(hex: string): number {
+    const [r, g, b] = [1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16) / 255);
+    return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+  }
+
+  /** Which formats draw their field from a variable rather than a literal. */
+  function themed(): string[] {
+    return FORMATS.filter((format) => {
+      const { container, unmount } = render(<FormatIcon format={format} />);
+      const fill = container.querySelector('rect')!.getAttribute('fill')!;
+      unmount();
+      return fill.startsWith('var(');
+    });
+  }
+
+  it('is Markdown, and only Markdown', () => {
+    // Thirteen formats keep one colour in both themes. A second themed tile is
+    // a decision, not a detail, so it should arrive with its own reason.
+    expect(themed()).toEqual(['md']);
+  });
+
+  it('inverts rather than greying, in both directions', () => {
+    const lightField = variable(':root {', 'format-md');
+    const darkField = variable(':root.dark {', 'format-md');
+
+    expect(lightness(lightField)).toBeLessThan(0.3);
+    expect(lightness(darkField)).toBeGreaterThan(0.7);
+
+    // The letterform goes the other way, or the tile is a solid block.
+    expect(lightness(variable(':root {', 'format-md-ink'))).toBeGreaterThan(0.7);
+    expect(lightness(variable(':root.dark {', 'format-md-ink'))).toBeLessThan(0.3);
+  });
+
+  it("never lands on another format's colour in either theme", () => {
+    // The failure this exception exists to avoid: greyed down for legibility,
+    // Markdown becomes txt.
+    const others = FORMATS.filter((format) => format !== 'md').map((format) => {
+      const { container, unmount } = render(<FormatIcon format={format} />);
+      const fill = container.querySelector('rect')!.getAttribute('fill')!;
+      unmount();
+      return fill;
+    });
+
+    for (const selector of [':root {', ':root.dark {']) {
+      expect(others, selector).not.toContain(variable(selector, 'format-md'));
+    }
   });
 });
 

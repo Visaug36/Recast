@@ -117,6 +117,27 @@ would end the privacy claim — the page is supposed to contact nobody, and
 taken from the design; the one thing that was not is the thing that would have
 made the design a lie.
 
+### The tab says "Recast — convert documents", and `/matrix` leads with itself
+
+A tab is not a line of prose. Chrome gives a tab about 180px with several open
+and around 120px with many, so the first two or three words are all anyone
+reads. The title was 42 characters and truncated at every width tested,
+including the widest.
+
+Rendered as real tab chrome at 240, 180 and 120px and looked at: `Recast —
+convert documents` fits whole at 240 and degrades to "Recast — convert…", which
+still says what the product is. `/matrix` takes `title: 'The full matrix'` and
+the layout's `%s — Recast` template, so it leads with the page rather than the
+product — at 120px "The full ma…" and "Recast — co…" are tellable apart, while
+"Recast — the full matrix" and the home page's title are not.
+
+The description and the Open Graph title and description are set from the same
+sentence, and every count in them comes from `totals()` rather than being typed.
+
+**Rejected:** a bare "Recast". It reads as a placeholder on a tab somebody
+returns to an hour later, and it is the one place the product gets to say what
+it does before it is opened.
+
 ### `ink`, not `body`, for running-prose colour
 
 Tailwind resolves `text-<name>` against both the font-size and the colour
@@ -166,6 +187,16 @@ Its field is near-black, which is the format's identity and is invisible against
 a dark card. It inverts rather than greying, so it stays the black-and-white one
 in both themes and does not collide with `txt`, which is already grey. Found by
 looking at the dark screenshot, not by reading the palette.
+
+**Rejected:** greying it down until it is legible, which is the obvious repair.
+It lands on `txt`, and the tiles exist so a row is identifiable before its label
+is read — the fix would have cost the thing the tile is for.
+
+The other thirteen keep one colour in both themes, and
+`components/FormatIcon.test.tsx` asserts that Markdown is the only themed tile,
+that it inverts in both directions rather than greying, and that neither of its
+two values equals another format's. A second themed tile is a decision rather
+than a detail, so it has to arrive with its own reason and move that test.
 
 ### The network counter counts off-origin requests, not all of them
 
@@ -275,16 +306,36 @@ negative control run once, on `main`, that nobody can repeat. These run on
 every commit, and the two that matter — deploy skipped, and the live site still
 serving the previous commit — reproduce runs #20 and the thing #20 hid.
 
-### The documented local basePath command echoes what it derived
+### The site path is committed, not read off the git remote
 
-It reads the repository name from the git remote, which a rename does not
-update — and GitHub redirects the old URL, so a stale remote keeps working and
-hands over the previous name. `verify:browser` then builds and serves at the
-same wrong prefix and passes, because both halves agree.
+**Superseded the echo below, in the same stage.** The documented local command
+derived the prefix from `git remote get-url origin` and printed it, on the
+reasoning that the stale value lived in a person's git config and so could not
+be fixed from here.
 
-It prints the prefix now, and the docs say to read it against the repository's
-name. There is no automatable fix: the stale value is in a person's git config,
-not in this repository.
+That was wrong in one specific way: the repository can say what it is. Four
+sessions in a row, this container came up with the remote reset to the
+pre-rename URL — and because GitHub redirects it, nothing failed. It built a
+whole site at `/Kiln`, including `og:url`, and the check that was supposed to
+catch a wrong prefix agreed with it, because both halves derived the same wrong
+answer from the same wrong source.
+
+So `homepage` in `package.json` now holds the published URL, `scripts/site-path.mjs`
+prints its path, and `pnpm site:path` is what the README and the `release-check`
+skill tell you to use. A committed value can go stale too, so the deploy
+workflow derives the same path from `GITHUB_REPOSITORY` and fails the build if
+the two disagree — verified by running the step with `GITHUB_REPOSITORY` set to
+the old name and watching it exit 1.
+
+**Rejected:** asking a person to check the echoed line. It is the fix that
+depends on the reader noticing, which is the same class of failure as the
+skipped deploy job nobody saw.
+
+### The old entry: the documented local basePath command echoes what it derived
+
+Kept because the reasoning is worth having beside what replaced it. It read the
+repository name from the git remote, which a rename does not update, and printed
+the prefix so a person could read it against the repository's name.
 
 ---
 
@@ -756,9 +807,13 @@ constraint is enforced by the toolchain, not only by discipline.
 
 ### The design is pinned
 
-The tokens, Inter and the 250 ms `cubic-bezier(0.32, 0.72, 0, 1)` curve are
-deliberate. If an installed skill or general best practice suggests otherwise,
-Recast's tokens win.
+`design/Recast.dc.html` is the approved design. The ink-plum palette, Schibsted
+Grotesk with Spline Sans Mono, and the 250 ms `cubic-bezier(0.32, 0.72, 0, 1)`
+curve are deliberate. If an installed skill or general best practice suggests
+otherwise, Recast's design wins.
 
-**Rejected:** the common advice to avoid Inter as overused, which
-`frontend-design` gives. Inter was chosen for this product.
+**Rejected:** the common advice a design skill gives about an overused typeface.
+Whatever the two faces are, they were chosen for this product, and the answer
+does not change with the fashion. (This entry named Inter until stage 9, which
+is when the design arrived and replaced it — a pinned value is only pinned if
+the note pinning it is kept true.)
