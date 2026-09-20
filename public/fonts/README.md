@@ -1,8 +1,8 @@
 # The CJK fonts
 
-`NotoSansJP.ttf` and `NotoSansSC.ttf` are what Recast embeds when a document
-contains Chinese, Japanese or Korean text and the target is PDF. Roboto, which
-every other PDF uses, has no CJK glyphs at all.
+`NotoSansJP.ttf`, `NotoSansSC.ttf` and `NotoSansKR.ttf` are what Recast embeds
+when a document contains Chinese, Japanese or Korean text and the target is
+PDF. Roboto, which every other PDF uses, has no CJK glyphs at all.
 
 They are served from Recast's own origin like every other font here: nothing is
 fetched from a CDN, and the worker only asks for one when a conversion actually
@@ -10,10 +10,11 @@ needs it.
 
 ## Where they came from
 
-Noto Sans JP 5.3.0 and Noto Sans SC 5.2.8, the `japanese` and
-`chinese-simplified` subsets published by [Fontsource](https://fontsource.org),
-which repackages Google's Noto. Licensed under the SIL Open Font License 1.1 —
-the full text is in `OFL.txt`.
+Noto Sans JP 5.3.0, Noto Sans SC 5.2.8 and Noto Sans KR 5.3.0 — the
+`japanese`, `chinese-simplified` and `korean` subsets published by
+[Fontsource](https://fontsource.org), which repackages Google's Noto. All three
+are licensed under the SIL Open Font License 1.1 — the full text is in
+`OFL.txt`.
 
 Fontsource ships `.woff2`. These are the same fonts converted to `.ttf`:
 
@@ -39,9 +40,27 @@ face in every file it writes. The same three-line test document came out at
 The download happens once a session; the bloat would happen in every file a
 person converts and keeps. So TTF, and the extra 1.3 MB is the price.
 
-## Why two files and not one pan-CJK font
+## Why three files and not one pan-CJK font
 
-A pan-CJK face is three to four times the size, and almost nobody needs both at
-once. Recast picks by what is in the document: kana means Japanese, otherwise
-Simplified Chinese. Each is fetched on its own, so a Japanese document never
-downloads the Chinese face.
+A pan-CJK face is three to four times the size, and almost nobody needs two of
+them at once. Recast picks by what is in the document: hangul means Korean,
+otherwise kana means Japanese, otherwise Simplified Chinese. Each is fetched on
+its own, so a Japanese document never downloads the Korean face, and a document
+with no CJK in it downloads none of them.
+
+## What each one covers
+
+Read out of the font's own `cmap` at load time rather than from a table that
+could drift — `readCmap` in `lib/registry/converters/_cjk.ts`, checked against
+fontTools for all three.
+
+| Face       | Code points | Han | Hangul | Kana |
+| ---------- | ----------- | --- | ------ | ---- |
+| NotoSansJP | 6886        | yes | no     | yes  |
+| NotoSansSC | 7946        | yes | no     | no   |
+| NotoSansKR | 11541       | no  | yes    | no   |
+
+**The Korean face carries no Han**, and only one face is embedded per document,
+so a Korean document quoting hanja loses the hanja — replaced, and named in a
+warning. Choosing Korean for a document written in Korean is still right: the
+other way round loses every syllable of it.

@@ -328,13 +328,17 @@ for (const fixtureName of SOURCES) {
 // The worker resolves the face against its own URL. Node tests stub `fetch`,
 // so this is the only thing that proves the path is right in a browser — the
 // same blind spot that once let the worker ship as uncompiled TypeScript.
-{
-  const cjkSource = join(downloads, 'cjk.md');
-  writeFileSync(
-    cjkSource,
-    '# 日本語の文書\n\n日本語のテキストです。Revenue 売上 rose.\n',
-  );
+// One document per face. Three faces ship, and a check that only ever loads
+// one of them would not notice a second going missing from the export — which
+// is a 404 on somebody's conversion, not a build failure.
+for (const [label, name, text] of [
+  ['Japanese', 'cjk-jp', '# 日本語の文書\n\n日本語のテキストです。Revenue 売上 rose.\n'],
+  ['Korean', 'cjk-kr', '# 한국어 문서\n\n한국어 텍스트입니다. Revenue rose.\n'],
+]) {
+  const cjkSource = join(downloads, `${name}.md`);
+  writeFileSync(cjkSource, text);
 
+  fontFetches.length = 0;
   await page.goto(base, { waitUntil: 'networkidle' });
   await page.setInputFiles('input[type=file]', cjkSource);
   await page.getByRole('radiogroup').first().waitFor({ timeout: 15000 });
@@ -352,7 +356,7 @@ for (const fixtureName of SOURCES) {
       page.waitForEvent('download', { timeout: 30000 }),
       button.click(),
     ]);
-    const saved = join(downloads, 'cjk-out.pdf');
+    const saved = join(downloads, `${name}-out.pdf`);
     await download.saveAs(saved);
     const size = readFileSync(saved).length;
     // A PDF that embedded the whole face would be megabytes; a subset is small.
@@ -367,7 +371,7 @@ for (const fixtureName of SOURCES) {
 
   const fetched =
     fontFetches.length > 0 ? fontFetches.join(', ') : 'NONE — the face was never fetched';
-  console.log(`\nCJK → pdf: ${cjkNote}; font requested: ${fetched}`);
+  console.log(`\n${label} → pdf: ${cjkNote}; font requested: ${fetched}`);
   if (fontFetches.length === 0) failures += 1;
 }
 

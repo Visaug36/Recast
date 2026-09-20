@@ -6,12 +6,12 @@
  * was nothing else in the document. A person whose document is in Japanese got
  * a refusal and nothing else.
  *
- * Two faces rather than one pan-CJK blob: a combined font is three to four
- * times the size and almost nobody needs both at once. See
+ * Three faces rather than one pan-CJK blob: a combined font is three to four
+ * times the size and almost nobody needs two of them at once. See
  * `public/fonts/README.md` for where they come from and why they are TTF.
  */
 
-export type CjkVariant = 'jp' | 'sc';
+export type CjkVariant = 'jp' | 'sc' | 'kr';
 
 interface Face {
   /** The name pdfmake knows it by, and the file served from our own origin. */
@@ -22,6 +22,7 @@ interface Face {
 export const FACES: Record<CjkVariant, Face> = {
   jp: { font: 'NotoSansJP', file: 'NotoSansJP.ttf' },
   sc: { font: 'NotoSansSC', file: 'NotoSansSC.ttf' },
+  kr: { font: 'NotoSansKR', file: 'NotoSansKR.ttf' },
 };
 
 /** Hiragana and katakana. Their presence is what makes a document Japanese. */
@@ -31,19 +32,36 @@ const KANA: [number, number][] = [
   [0xff66, 0xff9d],
 ];
 
+/** Hangul: the syllables, the jamo they are built from, and the half-width set. */
+const HANGUL: [number, number][] = [
+  [0x1100, 0x11ff],
+  [0x3130, 0x318f],
+  [0xa960, 0xa97f],
+  [0xac00, 0xd7ff],
+  [0xffa0, 0xffdc],
+];
+
 /**
  * Which face a document needs.
  *
- * Kana means Japanese. Otherwise Simplified Chinese, whose subset is the larger
- * of the two and covers the shared Han characters either way. Korean hangul has
- * no face here, so it stays in the unrenderable set and is reported — shipping a
- * third font for it is a decision, not an oversight.
+ * Hangul means Korean, kana means Japanese, and anything else that reached here
+ * is Han, which the Simplified Chinese subset covers either way.
+ *
+ * **Hangul is asked first, and that is a choice with a cost.** The Korean face
+ * carries the 11,172 modern syllables and the jamo, and no Han at all — so a
+ * Korean document quoting hanja loses the hanja, which `renderPdf` then replaces
+ * and names in a warning. The other order would lose every syllable of a
+ * document that is mostly Korean, which is worse: one face is embedded per
+ * document, and the script the document is actually written in should be the
+ * one that renders.
  */
 export function variantFor(codePoints: Iterable<number>): CjkVariant {
+  let japanese = false;
   for (const code of codePoints) {
-    if (KANA.some(([start, end]) => code >= start && code <= end)) return 'jp';
+    if (HANGUL.some(([start, end]) => code >= start && code <= end)) return 'kr';
+    if (KANA.some(([start, end]) => code >= start && code <= end)) japanese = true;
   }
-  return 'sc';
+  return japanese ? 'jp' : 'sc';
 }
 
 /**

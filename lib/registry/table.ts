@@ -199,7 +199,7 @@ export const converters: Converter[] = [
     to: 'pdf',
     fidelity: 'lossy',
     caveat:
-      'Each sheet is drawn as a plain table. Sheets wider than the page are clipped, and charts and formatting are dropped.',
+      'Each sheet is drawn as a plain table. A sheet wider than 12 columns turns the page sideways, and past 18 columns the rest are cut off. Charts and formatting are dropped.',
   },
   {
     from: 'xlsx',
@@ -243,7 +243,7 @@ export const converters: Converter[] = [
     to: 'pdf',
     fidelity: 'lossy',
     caveat:
-      'Each sheet is drawn as a plain table. Sheets wider than the page are clipped, and charts and formatting are dropped.',
+      'Each sheet is drawn as a plain table. A sheet wider than 12 columns turns the page sideways, and past 18 columns the rest are cut off. Charts and formatting are dropped.',
   },
   {
     from: 'ods',

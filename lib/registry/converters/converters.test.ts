@@ -368,35 +368,33 @@ describe('scripts in PDF output', () => {
   it('names what it could not draw instead of inventing glyphs', async () => {
     const convert = await engineFor('txt', 'pdf')!();
     const result = await convert(
-      new File(['Quarterly report\n\ngreetings in مرحبا and 한국어'], 'mixed.txt'),
+      new File(['Quarterly report\n\ngreetings in مرحبا and ไทย'], 'mixed.txt'),
     );
 
     const notes = said(result.warnings);
     expect(notes).toMatch(/Arabic/);
-    expect(notes).toMatch(/Korean/);
+    expect(notes).toMatch(/Thai/);
     expect(notes).toMatch(/replaced/);
     // What it does not do is emit something that looks like text.
     const text = await pdfText(result.files[0]!.blob);
     expect(text).toContain('Quarterly report');
-    expect(text).not.toContain('한국어');
+    expect(text).not.toContain('ไทย');
   });
 
   it('refuses a document it could only render as replacement characters', async () => {
     const convert = await engineFor('txt', 'pdf')!();
 
-    await expect(
-      convert(new File(['한국어 텍스트입니다'], 'all-korean.txt')),
-    ).rejects.toThrow(/Korean[\s\S]*Markdown or plain text/);
+    await expect(convert(new File(['مرحبا بالعالم'], 'all-arabic.txt'))).rejects.toThrow(
+      /Arabic[\s\S]*Markdown or plain text/,
+    );
   });
 
   it('counts only the document, not pdfmake’s own configuration', async () => {
     // The style names and font family in the document definition are Latin. If
-    // they counted as content, a page of Korean would never look unrenderable.
+    // they counted as content, a page of Thai would never look unrenderable.
     const convert = await engineFor('md', 'pdf')!();
 
-    await expect(convert(new File(['한국어입니다'], 'ko.md'))).rejects.toThrow(
-      /cannot draw/,
-    );
+    await expect(convert(new File(['ภาษาไทย'], 'th.md'))).rejects.toThrow(/cannot draw/);
   });
 });
 
@@ -474,6 +472,8 @@ describe('wide tables', () => {
   });
 
   it('xlsx → pdf still says when a sheet lost columns', async () => {
+    // Twenty columns is past what a landscape page holds, so this both turns
+    // the page and still loses the last two.
     const wide = [Array.from({ length: 20 }, (_, i) => `h${i}`).join(',')].join('\n');
     const toXlsx = await engineFor('csv', 'xlsx')!();
     const book = (await toXlsx(new File([wide], 'wide.csv'))).files[0]!;
@@ -481,7 +481,20 @@ describe('wide tables', () => {
     const convert = await engineFor('xlsx', 'pdf')!();
     const result = await convert(new File([book.blob], 'wide.xlsx'));
 
-    expect(said(result.warnings)).toMatch(/Sheets wider than 12 columns/);
+    expect(said(result.warnings)).toMatch(/Sheets wider than 18 columns/);
+    expect(said(result.warnings)).toMatch(
+      /did not fit upright, so the pages are landscape/,
+    );
+  });
+
+  it('xlsx → pdf leaves a sheet that fits upright alone', async () => {
+    // The rule is only worth having if it is a rule: turning every page
+    // sideways for the benefit of a wide sheet that is not there was the
+    // behaviour this replaced.
+    const convert = await engineFor('xlsx', 'pdf')!();
+    const result = await convert(fixture('sample.xlsx'));
+
+    expect(said(result.warnings)).not.toMatch(/landscape/);
   });
 });
 
@@ -597,14 +610,29 @@ describe('CJK in PDF output', () => {
     expect(await pdfText(result.files[0]!.blob)).toContain('日本語');
   });
 
-  it('still refuses Korean, and says Korean', async () => {
-    // Neither face carries a single hangul syllable, so this is honest — and
-    // it must not claim Recast cannot draw Chinese or Japanese any more.
+  it('draws Korean, and asks for the third face', async () => {
+    // Korean was refused for two stages because no face here carried a hangul
+    // syllable. It is the same machinery as the other two: one more face,
+    // fetched only by a document that needs it.
+    const source = '한국어 텍스트입니다';
     const convert = await engineFor('md', 'pdf')!();
+    const result = await convert(new File([source], 'ko.md'));
 
-    await expect(convert(new File(['한국어 텍스트입니다'], 'ko.md'))).rejects.toThrow(
-      /written in Korean, which Recast cannot draw/,
-    );
+    expect(await pdfText(result.files[0]!.blob)).toContain(source);
+    expect(result.warnings).toBeUndefined();
+    expect(fontRequests).toEqual(['NotoSansKR.ttf']);
+  });
+
+  it('says so when a Korean document quotes hanja it cannot draw', async () => {
+    // The Korean face carries no Han at all, and only one face is embedded per
+    // document. Choosing Korean for a Korean document is right; losing the
+    // hanja is the cost, and it is named rather than swallowed.
+    const convert = await engineFor('md', 'pdf')!();
+    const result = await convert(new File(['한국어와 漢字'], 'ko-hanja.md'));
+
+    expect(fontRequests).toEqual(['NotoSansKR.ttf']);
+    expect(said(result.warnings)).toMatch(/Chinese or Japanese/);
+    expect(await pdfText(result.files[0]!.blob)).toContain('한국어와');
   });
 });
 
@@ -623,6 +651,39 @@ describe('choosing a CJK face', () => {
     // And it is a real subset, not "everything".
     expect(covers.has('한'.codePointAt(0)!)).toBe(false);
     expect(covers.has('Κ'.codePointAt(0)!)).toBe(false);
+  });
+
+  it('reads the Korean face the same way fontTools does', async () => {
+    // The README records 6886 and 7946 for the other two, checked against
+    // fontTools. This face is 11541 — 11172 modern syllables, 94 jamo and the
+    // Latin and punctuation it needs to sit beside them.
+    const { readCmap } = await import('./_cjk');
+    const { readFileSync } = await import('node:fs');
+    const bytes = readFileSync('public/fonts/NotoSansKR.ttf');
+    const covers = readCmap(
+      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+    );
+
+    expect(covers.size).toBe(11541);
+    for (const character of '한국어입니다ABC') {
+      expect(covers.has(character.codePointAt(0)!), character).toBe(true);
+    }
+    // No Han at all, which is why a Korean document quoting hanja loses it.
+    expect(covers.has('漢'.codePointAt(0)!)).toBe(false);
+  });
+
+  it('picks Korean whenever there is hangul, ahead of both others', async () => {
+    const { variantFor } = await import('./_cjk');
+    const points = (text: string) => [...text].map((c) => c.codePointAt(0)!);
+
+    expect(variantFor(points('한국어'))).toBe('kr');
+    expect(variantFor(points('한국어와 漢字'))).toBe('kr');
+    // Hangul wins over kana too. One face is embedded per document, so the
+    // question is which script the document is written in, not which appears
+    // first — and a mixed document loses the other either way.
+    expect(variantFor(points('한국어とひらがな'))).toBe('kr');
+    // Jamo and the half-width forms are hangul as much as the syllables are.
+    expect(variantFor(points('ㄱㄴㄷ'))).toBe('kr');
   });
 
   it('picks Japanese only when there is kana', async () => {

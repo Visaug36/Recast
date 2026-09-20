@@ -96,10 +96,11 @@ function canDraw(code: number): boolean {
  * warning naming both "Chinese or Japanese" and "Japanese" tells the reader
  * nothing they can act on — one label per writing system is the useful grain.
  *
- * Korean is separate from the other two because Recast now draws Chinese and
- * Japanese and does not draw Korean: neither face carries a single hangul
- * syllable, so a Korean document is still refused, and the sentence has to say
- * Korean rather than lumping it in with two scripts that work.
+ * Korean is kept separate from the other two even though all three now render.
+ * The label is what a warning says when a character could not be drawn, and a
+ * Korean document quoting hanja loses the hanja — the Korean face carries no
+ * Han. "Chinese or Japanese" is then exactly the right thing to name, and would
+ * be wrong if Korean were folded in with it.
  */
 const SCRIPTS: [number, number, string][] = [
   [0x0590, 0x05ff, 'Hebrew'],
@@ -156,9 +157,16 @@ interface Run {
   font?: string;
 }
 
-/** True for a character a CJK face would be expected to carry. */
+/**
+ * True for a character one of the CJK faces would be expected to carry.
+ *
+ * Its job is only to decide whether a face is worth fetching at all. Which of
+ * the three, and what that face then cannot draw, is `variantFor`'s and the
+ * second pass's business.
+ */
 function isCjk(code: number): boolean {
-  return scriptOf(code) === 'Chinese or Japanese';
+  const script = scriptOf(code);
+  return script === 'Chinese or Japanese' || script === 'Korean';
 }
 
 /**

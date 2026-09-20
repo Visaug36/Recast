@@ -1,4 +1,4 @@
-import { lost } from '../shared';
+import { lost, note } from '../shared';
 import type { Warning } from '../types';
 import { MAX_LIST_DEPTH, listCounter } from './_md';
 import type { Block } from './_md';
@@ -94,9 +94,19 @@ export function blocksToPdfContent(blocks: Block[]): PdfContentResult {
 }
 
 /** The one sentence every clipping path uses, so they cannot drift apart. */
-export function clippedWarning(noun: 'Tables' | 'Sheets' = 'Tables'): Warning {
+export function clippedWarning(
+  noun: 'Tables' | 'Sheets' = 'Tables',
+  limit: number = MAX_PDF_COLUMNS,
+): Warning {
   return lost(
-    `${noun} wider than ${MAX_PDF_COLUMNS} columns were cut off at that point — a page can only hold so much.`,
+    `${noun} wider than ${limit} columns were cut off at that point — a page can only hold so much.`,
+  );
+}
+
+/** Said when a workbook was turned sideways to fit, which is not a loss. */
+export function turnedSidewaysNote(columns: number): Warning {
+  return note(
+    `A sheet ${columns} columns wide did not fit upright, so the pages are landscape.`,
   );
 }
 
@@ -110,11 +120,25 @@ export function clippedWarning(noun: 'Tables' | 'Sheets' = 'Tables'): Warning {
  */
 export const MAX_PDF_COLUMNS = 12;
 
-export function pdfTable(rows: Row[]): Record<string, unknown> {
+/**
+ * The same columns, on a page turned sideways.
+ *
+ * Derived rather than picked: A4 upright leaves 483pt between the margins, so
+ * twelve columns is a shade over 40pt each, which is about as narrow as a cell
+ * of 10pt text can be and still be read. Landscape leaves 730pt, and 730 at
+ * the same 40pt a column is eighteen. Widening the limit without widening the
+ * page would only make the clipping quieter, not rarer.
+ */
+export const MAX_PDF_COLUMNS_LANDSCAPE = 18;
+
+export function pdfTable(
+  rows: Row[],
+  limit: number = MAX_PDF_COLUMNS,
+): Record<string, unknown> {
   const usable = rows.filter((row) => row.length > 0);
   if (usable.length === 0) return { text: '' };
 
-  const width = Math.min(Math.max(...usable.map((row) => row.length)), MAX_PDF_COLUMNS);
+  const width = Math.min(Math.max(...usable.map((row) => row.length)), limit);
 
   const body = usable.map((row, rowIndex) =>
     Array.from({ length: width }, (_, i) => ({
@@ -131,6 +155,11 @@ export function pdfTable(rows: Row[]): Record<string, unknown> {
 }
 
 /** True when a table had to lose columns to fit the page. */
-export function tableWasClipped(rows: Row[]): boolean {
-  return rows.some((row) => row.length > MAX_PDF_COLUMNS);
+export function tableWasClipped(rows: Row[], limit: number = MAX_PDF_COLUMNS): boolean {
+  return rows.some((row) => row.length > limit);
+}
+
+/** The widest row in a set of tables, which decides how the page is turned. */
+export function widestRow(tables: Row[][]): number {
+  return Math.max(0, ...tables.flat().map((row) => row.length));
 }

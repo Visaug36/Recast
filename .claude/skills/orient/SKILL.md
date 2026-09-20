@@ -31,7 +31,7 @@ otherwise re-propose in good faith. "Why don't we just convert on a server" has
 an answer, and it is not a small one.
 
 **Check `OPEN.md` before calling something a bug.** Several known limits are
-deliberate and already have an owner — right-to-left, Korean, merged-cell layout,
+deliberate and already have an owner — right-to-left, merged-cell layout,
 the inline-run gap. They are open because of a decision, not an oversight, and
 each entry names what would have to change.
 

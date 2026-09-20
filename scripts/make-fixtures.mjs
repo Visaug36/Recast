@@ -117,6 +117,26 @@ export const MARKER = 'Recast fixture marker 4711';
   );
 }
 
+// ---- A workbook too wide for any page ---------------------------------
+// Twenty columns, which is past what landscape holds, so the clipping claim on
+// the wide-sheet pairs has something to act on. Without it that sentence is a
+// promise no test can reach — see lib/registry/caveats.test.ts.
+{
+  const XLSX = await import('@e965/xlsx');
+  const book = XLSX.utils.book_new();
+
+  const header = Array.from({ length: 20 }, (_, i) => `Col${i + 1}`);
+  const row = (n) => Array.from({ length: 20 }, (_, i) => `r${n}c${i + 1}`);
+  const sheet = XLSX.utils.aoa_to_sheet([header, row(1), row(2)]);
+  XLSX.utils.book_append_sheet(book, sheet, 'Wide');
+
+  write('wide.xlsx', Buffer.from(XLSX.write(book, { type: 'buffer', bookType: 'xlsx' })));
+  // The same sheet as an OpenDocument workbook, because `ods → pdf` carries the
+  // same caveat and a claim checked on only one of a sibling pair is how this
+  // codebase has drifted before.
+  write('wide.ods', Buffer.from(XLSX.write(book, { type: 'buffer', bookType: 'ods' })));
+}
+
 // ---- PPTX -------------------------------------------------------------
 {
   const { default: PptxGenJS } = await import('pptxgenjs');

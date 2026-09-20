@@ -11,6 +11,56 @@ would be two places to keep true, and the numbers below are the link.
 
 ---
 
+## Stage 10 — The promises are checked · 20 Sep
+
+**Shipped.** A harness that opens every conversion's real output and asks
+whether the caveat is true. Thirty-eight caveats, split into 54 sentences, each
+one written down as claims and matched exactly — 111 claims checked, and three
+lists of what could not be. Korean gets its own Noto face, closing the gap of
+drawing Chinese and Japanese while refusing the third script. `xlsx → pdf`
+turns the page at 12 columns instead of being landscape always, and clips at
+18 instead of 12. The three claims at the foot of the home page are cut.
+
+**Broke.** Three promises, found on the first run and left standing.
+
+`docx → rtf` says emphasis survives and it does not — that edge goes through
+the block model, which carries no inline runs. Nine other caveats state that
+limit correctly; this one states its reverse.
+
+`md → docx` says quotes and code blocks map to Word styles. They get an indent
+with italics and the Consolas face, as direct formatting, so there is no style
+for a reader to restyle. Its sibling `md → odt` writes real `Quotations` and
+`Preformatted Text` styles, which is what makes this a gap rather than an
+over-claim.
+
+They are pinned in `BROKEN` rather than corrected, because which of "fix the
+words" and "fix the writer" is right differs per case and is not the test's
+call.
+
+**Also broke, in the probes rather than the product.** The first draft asked
+"does the output contain a bold run" and reported four edges as carrying
+emphasis they drop — every writer here bolds a heading or a table header. The
+second draft counted an EPUB's own table of contents as a surviving link.
+
+**Taught.** Three things.
+
+A check is only a check if it can fail, and the honest way to say how much is
+covered is to count what was not. Twenty-nine of the claims are about something
+no fixture contains, thirteen cannot be written as an assertion at all. Rounding
+that up to "the caveats are tested" would have been the same class of lie the
+harness exists to catch.
+
+Exactness is the mechanism, not pedantry. The failure this is built for is a
+sentence that quietly stops being true, so a checker that tolerated rewording
+would tolerate precisely the bug. Matching the sentence verbatim is what turns
+editing a caveat into a decision somebody has to make.
+
+A sibling is the best evidence that something is a gap rather than a limit.
+`md → odt` doing the thing `md → docx` claims is what settles the argument —
+the same way declaring the ODS edges settled it in stage 7.
+
+---
+
 ## Stage 9 — The approved design · 19 Sep
 
 **Shipped.** `design/Recast.dc.html`, committed first and then implemented.

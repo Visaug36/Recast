@@ -90,10 +90,17 @@ silence.
 
 **Input** `'日本語のテキスト 中文 한국어'`
 
-**Correct** Survives intact in every text and rich format. In PDF: replaced,
-counted, and named as "Chinese, Japanese or Korean" in `warnings`. A document
-that is _only_ CJK must be **refused** by `* → pdf`, not converted to a page of
-replacement characters.
+**Correct** Survives intact in every text and rich format. In PDF it **renders**:
+one of three Noto faces is fetched from Recast's own origin and embedded, chosen
+by what is in the document — hangul means Korean, otherwise kana means Japanese,
+otherwise Simplified Chinese.
+
+**The catch to watch for.** Only one face is embedded per document, so a mixed
+document loses whatever that face does not carry — and the Korean face carries
+no Han at all. `'한국어와 漢字'` must render the hangul, replace the hanja, and
+**say so** in `warnings`. A document written in a script no face covers, such as
+Arabic or Thai, must still be **refused** by `* → pdf` rather than converted to a
+page of replacement characters.
 
 **Applies to** every pair.
 

@@ -45,18 +45,6 @@ read the script. This is the one failure mode Recast cannot self-verify.
 **What would change it:** a UAX #9 implementation _and_ someone who reads the
 script to check the output. The second is the binding constraint.
 
-### Korean has no PDF path
-
-Neither shipped Noto face carries a hangul syllable, so a Korean document is
-refused — and now says _Korean_, rather than claiming Recast cannot draw Chinese or
-Japanese.
-
-**Why it stays open:** a third multi-megabyte font is a decision about download
-size, not an oversight.
-
-**What would change it:** your call on shipping it. The machinery is already
-there — `_cjk.ts` loads a face by variant and reads its coverage from the font.
-
 ### x2t: build size unmeasured, licence undecided
 
 The write-up is at `docs/x2t-spike.md` on branch `spike/x2t-wasm`.
@@ -79,14 +67,6 @@ does not.
 
 **Why it stays open:** every writer Recast has writes a plain grid. Carrying spans
 would mean a span model through five writers.
-
-### `xlsx → pdf` clips past 12 columns
-
-It warns, naming the columns lost. The layout is unchanged.
-
-**Why it stays open:** the honest fixes are landscape, a smaller type size, or
-splitting across pages, and each is a design decision about what the reader
-expects from a wide sheet. Worth taking with the UI stage rather than guessing.
 
 ### The block model carries no inline runs
 
@@ -140,8 +120,33 @@ decisions nobody has made.
 **What would change it:** your call on whether the matrix is enough. It answers
 the same question in one page.
 
-### `xlsx → pdf` clipping is now a `lost` warning, and still clips
+### Twenty-nine caveat claims have no fixture to act on
 
-Unchanged in substance — see above — but it is worth knowing the severity
-channel now marks it as data gone, which is the strongest thing the interface
-can say short of refusing.
+`lib/registry/caveats.test.ts` checks 111 claims against real output and
+reports what it cannot reach. Twenty-nine are about a feature no fixture has —
+a chart, an image, cell formatting, a formula in an `.ods`. Each is a fixture
+away from being checked, and the list is snapshotted so it can only shrink
+deliberately.
+
+**Why it stays open:** not a defect, and not urgent. It is the honest measure of
+how much of the promise surface is actually covered, and it is written down
+instead of being rounded up to "the caveats are tested".
+
+**What would change it:** richer fixtures. A workbook with a chart and a merged
+cell, a deck with an image and a speaker note, a Markdown file with a raw HTML
+block.
+
+### Three promises are broken, and pinned rather than corrected
+
+`docx → rtf` claims emphasis survives, and it does not. `md → docx` claims
+quotes and code blocks map to Word styles, and they get direct formatting
+instead. Both are listed in `BROKEN` in `lib/registry/caveats.test.ts`, so the
+suite is honest rather than green.
+
+**Why it stays open:** the first is the inline-run gap, and the sentence should
+be corrected rather than the writer. The second is a real gap — `md → odt`
+writes the real OpenDocument styles, so the Word writer is the odd one out —
+and that is a change to the writer.
+
+**What would change it:** yours to say which way each goes. The evidence is in
+the comment beside each line.

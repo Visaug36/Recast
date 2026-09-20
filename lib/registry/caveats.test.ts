@@ -4,8 +4,9 @@ import { engineFor } from './engines';
 import { ANCHORS, canHold, featuresOf, type Feature, type Found } from '@/test/features';
 import JSZip from 'jszip';
 import { readBack } from '@/test/read-back';
+import { MAX_PDF_COLUMNS, MAX_PDF_COLUMNS_LANDSCAPE } from './converters/_blocks-to-pdf';
 import { fixture, MARKER } from '@/test/fixtures';
-import type { Format, OutputFile } from './types';
+import type { ConvertFn, Format, OutputFile } from './types';
 
 /**
  * Every caveat is a promise, and this is where the promises are kept.
@@ -65,6 +66,13 @@ interface Seen {
   parts: string[];
   /** The markup inside those files, for a claim about a package's structure. */
   partText: string;
+  /**
+   * The same edge run again on a twenty-column workbook, where there is one.
+   *
+   * The ordinary fixture is three columns wide, so every claim about what
+   * happens to a sheet too wide for the page was unexercised until this.
+   */
+  wide?: { text: string; bytes: Uint8Array };
 }
 
 type Claim =
@@ -95,6 +103,20 @@ const headings = (md: string) => lines(md).filter((line) => /^#{1,6} \S/.test(li
 /** How many pipe tables a Markdown document contains. */
 function pipeTables(md: string): number {
   return lines(md).filter((line) => /^\|[\s:-]*-[\s|:-]*\|[ \t]*$/.test(line)).length;
+}
+
+/**
+ * Whether a PDF's pages are wider than they are tall.
+ *
+ * `/MediaBox [0 0 w h]`, which is the page box in points — the one place a PDF
+ * says which way round it is.
+ */
+function isLandscape(bytes: Uint8Array): boolean {
+  const box = /\/MediaBox\s*\[\s*[\d.]+\s+[\d.]+\s+([\d.]+)\s+([\d.]+)/.exec(
+    new TextDecoder().decode(bytes),
+  );
+  if (!box) return false;
+  return Number(box[1]) > Number(box[2]);
 }
 
 /** Blocks separated by a blank line, ignoring leading and trailing space. */
@@ -344,12 +366,32 @@ const CLAIMS: Record<string, Claim[]> = {
   ],
   'Only the values survive.': [{ keeps: [MARKER, '4000'] }, { loses: ['SUM('] }],
   'Each sheet is drawn as a plain table.': [{ keeps: [MARKER] }],
-  'Sheets wider than the page are clipped, and charts and formatting are dropped.': [
-    {
-      unverifiable:
-        'The fixture workbook is three columns wide, so nothing is clipped and this claim is never put to the test. A wide fixture would make the first half checkable.',
-    },
-  ],
+  'A sheet wider than 12 columns turns the page sideways, and past 18 columns the rest are cut off.':
+    [
+      {
+        shape: 'the numbers in the sentence are the numbers in the code',
+        check: () =>
+          MAX_PDF_COLUMNS === 12 && MAX_PDF_COLUMNS_LANDSCAPE === 18
+            ? null
+            : `the code says ${MAX_PDF_COLUMNS} and ${MAX_PDF_COLUMNS_LANDSCAPE}`,
+      },
+      {
+        shape: 'a three-column sheet is left upright',
+        check: (seen) =>
+          isLandscape(seen.outBytes) ? 'the narrow workbook was turned sideways' : null,
+      },
+      {
+        shape: 'a twenty-column sheet turns the page and keeps eighteen of them',
+        check: (seen) => {
+          if (!seen.wide) return 'no wide workbook for this format';
+          if (!isLandscape(seen.wide.bytes)) return 'the wide workbook stayed upright';
+          if (!seen.wide.text.includes('Col18')) return 'column 18 did not survive';
+          if (seen.wide.text.includes('Col19')) return 'column 19 was not cut off';
+          return null;
+        },
+      },
+    ],
+  'Charts and formatting are dropped.': [{ dropped: ['charts', 'styling'] }],
   'Values become Word tables.': [{ survives: ['tables'] }, { keeps: [MARKER] }],
   'Each sheet becomes an array of objects keyed by its first row.': [
     {
@@ -481,6 +523,12 @@ const FIXTURES: Partial<Record<Format, string>> = {
   odp: 'sample.odp',
 };
 
+/** Sources that also have a workbook too wide for any page. */
+const WIDE: Partial<Record<Format, string>> = {
+  xlsx: 'wide.xlsx',
+  ods: 'wide.ods',
+};
+
 /** Splits a caveat the way a reader does: one sentence, one claim. */
 function sentences(caveat: string): string[] {
   return caveat
@@ -509,7 +557,15 @@ async function run(from: Format, to: Format) {
     outBytes,
     outFiles: result.files,
     ...(await insideOf(outBytes)),
+    ...(WIDE[from] ? { wide: await runWide(convert, WIDE[from]!, to) } : {}),
   };
+}
+
+/** The same edge, on a workbook wider than any page can hold. */
+async function runWide(convert: ConvertFn, name: string, to: Format) {
+  const result = await convert(fixture(name));
+  const bytes = new Uint8Array(await result.files[0]!.blob.arrayBuffer());
+  return { text: await readBack(to, bytes), bytes };
 }
 
 /** What is inside a package: its file names and its markup. */

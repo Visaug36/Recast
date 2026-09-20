@@ -10,6 +10,102 @@ narrative goes in `STAGES.md`; unresolved questions go in `OPEN.md`.
 
 ---
 
+## 2026-09-20 — The promises are checked
+
+### A caveat is split into sentences, and every sentence must be written down
+
+`lib/registry/caveats.test.ts` matches each sentence of each caveat against a
+table of claims, **exactly**. No fuzzy match, no fallback, no default. Rewording
+a caveat fails the suite until somebody says what the new words promise, which
+is the whole mechanism: the failure mode this is built for is a sentence that
+quietly stops being true, and a checker that tolerates rewording tolerates
+exactly that.
+
+**Rejected:** parsing the English. A parser that infers "links carry over" from
+a sentence would also infer it from a sentence that no longer says it, and
+would need to be right about grammar nobody is holding still.
+
+**Rejected:** a claim list beside each converter instead of keyed on the
+sentence. It would drift from the caveat the moment one was edited, which is
+the same bug one layer along.
+
+### Inline claims are anchored to a word, not to a flag
+
+Every writer here bolds a heading or a table header, so "the output contains a
+bold run" says nothing about whether the source's emphasis came through. The
+first draft of the probes asked exactly that and reported four edges as
+carrying emphasis they drop. An emphasis claim now asks whether _the fixture's
+emphasised word_ is still emphasised, and a link claim whether _the fixture's
+host_ is still linked — which also stops an EPUB's own table of contents
+reading as a surviving link.
+
+### What is not checked is reported, in three kinds
+
+A claim about a feature no fixture contains is **not exercised**; a claim that
+cannot be written as an assertion is **unverifiable, with a reason**; a claim
+about something the target format cannot express holds **by construction**. All
+three are snapshotted.
+
+**Rejected:** counting an unexercised claim as passing. This repository has
+shipped eight tests with no assertions in one file before, and the lesson was
+that a check which cannot fail is worse than no check, because it is believed.
+
+**Rejected:** weakening a caveat until it could be checked. "Rendered with
+Recast's own typography" cannot be verified without the renderer it is being
+compared to, and the honest thing is to say so where the claim is recorded.
+
+### Three broken promises are pinned rather than corrected
+
+`docx → rtf` says emphasis survives; it does not. `md → docx` says quotes and
+code blocks map to Word styles; they get an indent with italics and the Consolas
+face, as direct formatting. The suite lists them in `BROKEN` and fails on
+anything else, so it is honest about the product rather than green because
+nobody looked.
+
+**Rejected:** fixing them in the same change that found them. Whether the words
+or the writer is wrong is a different question per case — the first is the
+inline-run gap stated backwards, the second is a gap its own sibling `md → odt`
+does not have — and deciding it silently is how a caveat becomes a promise
+nobody agreed to.
+
+### `xlsx → pdf` turns the page instead of always being landscape
+
+A sheet wider than 12 columns is set landscape, which holds 18; past that the
+rest are still cut off, and both the turn and the loss are said in `warnings`.
+
+The 18 is derived, not picked: A4 upright leaves 483pt between the margins, so
+twelve columns is a shade over 40pt each, which is about as narrow as a cell of
+10pt text can be and still be read. Landscape leaves 730pt, and 730 at the same
+40pt is eighteen.
+
+**Rejected:** landscape on every workbook, which is what it did. It made every
+three-column sheet a sideways page for the benefit of a wide one that might not
+be there, and clipped at twelve anyway — so the orientation cost something on
+every conversion and bought nothing on the one it was for.
+
+**Rejected:** a smaller type size, or splitting a sheet across pages. Both trade
+a loss you can see for one you cannot: six more columns at 7pt is not six more
+columns anybody reads, and a sheet split across pages loses the one thing a
+table has, which is that its rows line up.
+
+### Korean gets its own face
+
+`NotoSansKR.ttf`, 2.4 MB, fetched from Recast's own origin only by a document
+that contains hangul. It closes the odd gap of drawing Chinese and Japanese
+while refusing Korean, and it is the same machinery as the other two rather
+than a special case.
+
+**Hangul is asked first, ahead of kana.** The Korean face carries the 11,172
+modern syllables and no Han at all, and only one face is embedded per document —
+so a Korean document quoting hanja loses the hanja, which is replaced and named.
+The other order would lose every syllable of a document written in Korean, which
+is worse.
+
+**Rejected:** a pan-CJK face. Three to four times the size, and almost nobody
+needs two scripts at once.
+
+---
+
 ## 2026-09-19 — Warnings have a severity, and progress has a number
 
 ### Severity is set where the warning is written, never read off its wording
@@ -640,10 +736,11 @@ bidirectional algorithm.
 to anyone who does not read the script, which makes it the one failure mode Recast
 cannot self-verify.
 
-### Korean is refused rather than given a third font
+### Korean was refused rather than given a third font — **reversed in stage 10**
 
-Neither shipped face carries a hangul syllable. Adding a third is a decision
-about download size, not an oversight, and it is recorded as one.
+Neither shipped face carried a hangul syllable. Adding a third was a decision
+about download size, not an oversight, and it was recorded as one. It was taken
+in stage 10; see "Korean gets its own face" below.
 
 ### Silent loss is a bug: `htmlToBlocks` gained a warnings channel
 

@@ -123,7 +123,7 @@ subagent was doing exactly what it should; the staging was the mistake.
 
 14 formats, **114 pairs from 44 declared edges** — 44 direct and 70 routed
 through a hub, all of them listed at `/matrix` and counted from the registry
-rather than written down. 439 tests, entry chunk ~187 KB gzipped against a
+rather than written down. 446 tests, entry chunk ~187 KB gzipped against a
 200 KB budget. Static export, deployed to GitHub Pages. 64 pairs are deliberately
 refused and written as rules in `lib/registry/unsupported.ts`: either the value
 of the output is its visual layout, and rebuilding that means a rendering engine
@@ -144,19 +144,29 @@ numbers are noise.
 
 PDF output embeds pdfmake's Roboto: Latin, Latin Extended-A, **the whole
 Vietnamese block**, Greek and Cyrillic — 927 code points, listed exactly in
-`lib/registry/converters/_pdf.ts`. When a document contains Chinese or Japanese,
-a Noto face is fetched from Recast's own origin (`public/fonts/`) and used for
-those characters only, so a mixed document keeps its Greek and Cyrillic too.
-Anything no available font can draw is replaced and named in `warnings`, and a
+`lib/registry/converters/_pdf.ts`. When a document contains Chinese, Japanese or
+Korean, one of three Noto faces is fetched from Recast's own origin
+(`public/fonts/`) and used for those characters only, so a mixed document keeps
+its Greek and Cyrillic too. **Hangul picks the Korean face ahead of everything
+else, and that face carries no Han** — a Korean document quoting hanja loses the
+hanja, which is the cost of embedding one face per document and is named in
+`warnings`. Anything no available font can draw is replaced and named, and a
 document with nothing renderable left is refused. Never let that check be
 bypassed — silent mojibake is the bug it was written for.
+
+**A caveat is checked, not trusted.** `lib/registry/caveats.test.ts` splits every
+caveat into sentences and matches each one **exactly** against a table of claims,
+then checks those claims by opening the real output. Rewording a caveat fails the
+suite until somebody says what the new words promise. Three promises are
+currently broken and pinned in `BROKEN` rather than corrected; what the harness
+cannot reach is snapshotted rather than counted as passing.
 
 ## Known open issues
 
 **`docs/OPEN.md`.** Everything outstanding lives there, each with why it is open,
 what would have to change, and whose it is — yours (the default branch flip, the
-iOS memory threshold) or deferred with a reason (right-to-left, Korean, x2t,
-merged-cell layout, `xlsx → pdf` clipping, the inline-run gap).
+iOS memory threshold) or deferred with a reason (right-to-left, x2t,
+merged-cell layout, the inline-run gap, the caveats that no fixture reaches).
 
 This list used to be repeated here. Two copies of an issue list is one copy that
 goes stale, and the stale one is the one always in context.
